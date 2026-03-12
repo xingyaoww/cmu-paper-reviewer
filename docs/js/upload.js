@@ -131,14 +131,13 @@ function updateSubmitButton() {
     const email = document.getElementById("email").value.trim();
     submitBtn.disabled = !email;
   } else {
-    const mistral = document.getElementById("mistral-key").value.trim();
     const litellm = document.getElementById("litellm-key").value.trim();
-    submitBtn.disabled = !mistral || !litellm;
+    submitBtn.disabled = !litellm;
   }
 }
 
 // Listen for input changes on relevant fields
-["email", "mistral-key", "litellm-key"].forEach((id) => {
+["email", "litellm-key"].forEach((id) => {
   const el = document.getElementById(id);
   if (el) el.addEventListener("input", updateSubmitButton);
 });
@@ -162,7 +161,6 @@ form.addEventListener("submit", async (e) => {
     // BYOK mode
     const byokEmail = document.getElementById("byok-email").value.trim();
     if (byokEmail) formData.append("email", byokEmail);
-    formData.append("user_mistral_api_key", document.getElementById("mistral-key").value);
     formData.append("user_litellm_api_key", document.getElementById("litellm-key").value);
     const litellmUrl = document.getElementById("litellm-url").value.trim();
     if (litellmUrl) formData.append("user_litellm_base_url", litellmUrl);

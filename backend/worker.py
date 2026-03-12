@@ -71,7 +71,6 @@ def clear_user_keys(key: str):
         result = session.execute(select(Submission).where(Submission.key == key))
         sub = result.scalar_one_or_none()
         if sub:
-            sub.user_mistral_api_key = None
             sub.user_litellm_api_key = None
             sub.user_litellm_base_url = None
             sub.user_tavily_api_key = None
@@ -87,7 +86,10 @@ def process_submission(submission: Submission):
         # Step 1: OCR
         logger.info("[%s] Starting OCR... (mode=%s)", key, submission.mode.value)
         update_status(key, SubmissionStatus.ocr)
-        ocr = OCRService(api_key=submission.user_mistral_api_key if is_byok else None)
+        ocr = OCRService(
+            api_key=submission.user_litellm_api_key if is_byok else None,
+            api_base=submission.user_litellm_base_url if is_byok else None,
+        )
         ocr.process_pdf(str(pdf_file), key)
         logger.info("[%s] OCR complete.", key)
 

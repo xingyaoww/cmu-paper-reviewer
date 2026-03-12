@@ -2,9 +2,6 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # Mistral OCR
-    mistral_api_key: str = ""
-
     # Tavily
     tavily_api_key: str = ""
 

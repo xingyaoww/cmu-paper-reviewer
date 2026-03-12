@@ -6,7 +6,7 @@ An AI-powered web service that generates critical reviews for academic research 
 
 - **Backend** — Python/FastAPI REST API + background worker
 - **Frontend** — Static HTML/CSS/JS (deployable to GitHub Pages via `docs/`)
-- **Processing pipeline** — Mistral OCR → OpenHands agent (Claude-4.5-Opus) → Markdown review → PDF
+- **Processing pipeline** — OCR (Mistral via LiteLLM) → OpenHands agent (Claude-4.5-Opus) → Markdown review → PDF
 
 ## Project Structure
 
@@ -23,7 +23,7 @@ backend/
 │   ├── submissions.py   # POST /api/submit, GET /api/status/{key}
 │   └── reviews.py       # Review, verification code, and annotation endpoints
 └── services/
-    ├── ocr_service.py       # Mistral OCR
+    ├── ocr_service.py       # OCR via LiteLLM (Mistral OCR model)
     ├── review_service.py    # OpenHands agent orchestration
     ├── pdf_service.py       # LaTeX PDF generation (weasyprint fallback)
     ├── email_service.py     # HTML email notifications
@@ -56,8 +56,7 @@ cp .env.example .env
 ```
 
 Required keys:
-- `MISTRAL_API_KEY` — for OCR
-- `LITELLM_API_KEY` — for the review agent
+- `LITELLM_API_KEY` — for OCR and the review agent
 - `TAVILY_API_KEY` — for literature search
 
 ### 3. Start the API server

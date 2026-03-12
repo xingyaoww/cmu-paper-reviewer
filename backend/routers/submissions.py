@@ -22,7 +22,6 @@ async def submit_paper(
     mode: str = Form("queue"),
     code_file: UploadFile | None = File(None, description="Optional code zip"),
     supplementary_file: UploadFile | None = File(None, description="Optional supplementary PDF"),
-    user_mistral_api_key: str | None = Form(None),
     user_litellm_api_key: str | None = Form(None),
     user_litellm_base_url: str | None = Form(None),
     user_tavily_api_key: str | None = Form(None),
@@ -40,8 +39,6 @@ async def submit_paper(
         raise HTTPException(status_code=400, detail="Email is required for queue mode.")
 
     if mode == "byok":
-        if not user_mistral_api_key:
-            raise HTTPException(status_code=400, detail="Mistral API key is required for BYOK mode.")
         if not user_litellm_api_key:
             raise HTTPException(status_code=400, detail="LiteLLM API key is required for BYOK mode.")
 
@@ -94,7 +91,6 @@ async def submit_paper(
         mode=SubmissionMode(mode),
         has_code=has_code,
         has_supplementary=has_supplementary,
-        user_mistral_api_key=user_mistral_api_key,
         user_litellm_api_key=user_litellm_api_key,
         user_litellm_base_url=user_litellm_base_url,
         user_tavily_api_key=user_tavily_api_key,

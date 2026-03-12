@@ -1,11 +1,11 @@
-"""OCR service refactored from ocr.py — uses Mistral OCR to extract text from PDFs."""
+"""OCR service — uses LiteLLM to call Mistral OCR and extract text from PDFs."""
 
 import base64
 import json
 import logging
 from pathlib import Path
 
-from mistralai import Mistral
+import litellm
 
 from backend.config import settings
 from backend.services.storage_service import (
@@ -18,8 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class OCRService:
-    def __init__(self, api_key: str | None = None):
-        self.client = Mistral(api_key=api_key or settings.mistral_api_key)
+    def __init__(self, api_key: str | None = None, api_base: str | None = None):
+        self.api_key = api_key or settings.litellm_api_key
+        self.api_base = api_base or settings.litellm_base_url or None
 
     @staticmethod
     def _encode_pdf(pdf_path: str | Path) -> str:
@@ -27,20 +28,21 @@ class OCRService:
             return base64.b64encode(f.read()).decode("utf-8")
 
     def process_pdf(self, pdf_path: str | Path, key: str) -> str:
-        """Run Mistral OCR on a PDF and save the results.
+        """Run OCR on a PDF via LiteLLM and save the results.
 
         Returns the extracted markdown text.
         """
         logger.info("Starting OCR for key=%s, file=%s", key, pdf_path)
         base64_pdf = self._encode_pdf(pdf_path)
 
-        ocr_response = self.client.ocr.process(
-            model="mistral-ocr-latest",
+        ocr_response = litellm.ocr(
+            model="mistral/mistral-ocr-latest",
             document={
                 "type": "document_url",
                 "document_url": f"data:application/pdf;base64,{base64_pdf}",
             },
-            table_format="html",
+            api_key=self.api_key,
+            api_base=self.api_base,
             include_image_base64=True,
         )
 
@@ -53,11 +55,11 @@ class OCRService:
 
             # Save embedded images
             if page.images:
-                for img in page.images:
-                    img_stem = Path(img.id).stem
+                for img_idx, img in enumerate(page.images):
+                    img_id = f"page{page.index}_img{img_idx}"
 
                     # Decode and save image if base64 present
-                    img_filename = f"{img_stem}.png"  # default
+                    img_filename = f"{img_id}.png"  # default
                     if img.image_base64:
                         img_b64 = img.image_base64
                         # Strip data URI prefix if present (e.g. "data:image/jpeg;base64,...")
@@ -66,17 +68,13 @@ class OCRService:
                         img_bytes = base64.b64decode(img_b64)
                         # Detect actual format from magic bytes
                         ext = ".png" if img_bytes[:4] == b"\x89PNG" else ".jpg"
-                        img_filename = f"{img_stem}{ext}"
+                        img_filename = f"{img_id}{ext}"
                         img_path = images_dir(key) / img_filename
                         img_path.write_bytes(img_bytes)
 
-                    img_data = {
-                        "id": img_filename,
-                        "top_left_x": img.top_left_x,
-                        "top_left_y": img.top_left_y,
-                        "bottom_right_x": img.bottom_right_x,
-                        "bottom_right_y": img.bottom_right_y,
-                    }
+                    img_data = {"id": img_filename}
+                    if img.bbox:
+                        img_data.update(img.bbox)
                     all_images.append(img_data)
 
         full_text = "\n\n".join(full_text_parts)

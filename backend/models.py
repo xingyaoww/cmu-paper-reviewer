@@ -43,7 +43,6 @@ class Submission(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     has_code: Mapped[bool] = mapped_column(Boolean, default=False)
     has_supplementary: Mapped[bool] = mapped_column(Boolean, default=False)
-    user_mistral_api_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     user_litellm_api_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     user_litellm_base_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     user_tavily_api_key: Mapped[str | None] = mapped_column(Text, nullable=True)
